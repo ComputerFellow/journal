@@ -111,7 +111,8 @@ export default function JournalApp() {
   const [searchQuery, setSearchQuery] = useState("");
   const [moodFilter, setMoodFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
-
+  const [previewPhoto, setPreviewPhoto] = useState(null);
+  const [showWelcome, setShowWelcome] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     date: new Date().toISOString().split("T")[0],
@@ -122,8 +123,17 @@ export default function JournalApp() {
   });
   const [newTag, setNewTag] = useState("");
 
+  const dismissWelcome = () => {
+    localStorage.setItem("has_visited", "true");
+    setShowWelcome(false);
+  };
+
   useEffect(() => {
     loadEntries();
+    const hasVisited = localStorage.getItem("has_visited");
+    if (!hasVisited) {
+      setShowWelcome(true);
+    }
   }, []);
 
   const loadEntries = () => {
@@ -133,7 +143,7 @@ export default function JournalApp() {
       if (stored) {
         const loadedEntries = JSON.parse(stored);
         setEntries(
-          loadedEntries.sort((a, b) => new Date(b.date) - new Date(a.date))
+          loadedEntries.sort((a, b) => new Date(b.date) - new Date(a.date)),
         );
       }
     } catch (error) {
@@ -215,18 +225,35 @@ export default function JournalApp() {
     setCurrentView("edit");
   };
 
-  const handlePhotoUpload = (e) => {
-    const files = Array.from(e.target.files);
-    files.forEach((file) => {
+  const compressImage = (file, maxWidth = 1200, quality = 0.75) => {
+    return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData((prev) => ({
-          ...prev,
-          photos: [...prev.photos, reader.result],
-        }));
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const scale = Math.min(1, maxWidth / img.width);
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL("image/jpeg", quality));
+        };
+        img.src = reader.result;
       };
       reader.readAsDataURL(file);
     });
+  };
+
+  const handlePhotoUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    for (const file of files) {
+      const compressed = await compressImage(file);
+      setFormData((prev) => ({
+        ...prev,
+        photos: [...prev.photos, compressed],
+      }));
+    }
   };
 
   const removePhoto = (index) => {
@@ -259,7 +286,7 @@ export default function JournalApp() {
       entry.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       entry.thoughts?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       entry.tags?.some((tag) =>
-        tag.toLowerCase().includes(searchQuery.toLowerCase())
+        tag.toLowerCase().includes(searchQuery.toLowerCase()),
       );
 
     const matchesMood = moodFilter === "all" || entry.mood === moodFilter;
@@ -531,7 +558,7 @@ export default function JournalApp() {
                   className="flex-1 sm:flex-none px-6 py-1 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-colors border border-gray-200">
                   Cancel
                 </button>
-                {editingEntry && (  
+                {editingEntry && (
                   <button
                     onClick={() => deleteEntry(editingEntry.id)}
                     className="flex-1 sm:flex-none px-6 py-1 bg-white text-red-600 rounded-lg hover:bg-red-50 transition-colors inline-flex justify-center items-center gap-2 border border-gray-200">
@@ -687,35 +714,41 @@ export default function JournalApp() {
                                   moodData.darkColor === "bg-yellow-300"
                                     ? "#fddf475c"
                                     : moodData.darkColor === "bg-pink-300"
-                                    ? "#f9a8d45c"
-                                    : moodData.darkColor === "bg-purple-300"
-                                    ? "#d8b4fe5c"
-                                    : moodData.darkColor === "bg-blue-300"
-                                    ? "#93c5fd5c"
-                                    : moodData.darkColor === "bg-orange-300"
-                                    ? "#fdba745c"
-                                    : moodData.darkColor === "bg-red-300"
-                                    ? "#fca5a55c"
-                                    : moodData.darkColor === "bg-green-300"
-                                    ? "#86efac5c"
-                                    : "#5eead433"
+                                      ? "#f9a8d45c"
+                                      : moodData.darkColor === "bg-purple-300"
+                                        ? "#d8b4fe5c"
+                                        : moodData.darkColor === "bg-blue-300"
+                                          ? "#93c5fd5c"
+                                          : moodData.darkColor ===
+                                              "bg-orange-300"
+                                            ? "#fdba745c"
+                                            : moodData.darkColor ===
+                                                "bg-red-300"
+                                              ? "#fca5a55c"
+                                              : moodData.darkColor ===
+                                                  "bg-green-300"
+                                                ? "#86efac5c"
+                                                : "#5eead433"
                                 }, 
                                 ${
                                   moodData.darkColor === "bg-yellow-300"
                                     ? "#fddf4780"
                                     : moodData.darkColor === "bg-pink-300"
-                                    ? "#f9a8d480"
-                                    : moodData.darkColor === "bg-purple-300"
-                                    ? "#d8b4fe80"
-                                    : moodData.darkColor === "bg-blue-300"
-                                    ? "#93c5fd80"
-                                    : moodData.darkColor === "bg-orange-300"
-                                    ? "#fdba7480"
-                                    : moodData.darkColor === "bg-red-300"
-                                    ? "#fca5a580"
-                                    : moodData.darkColor === "bg-green-300"
-                                    ? "#86efac80"
-                                    : "#5eead480"
+                                      ? "#f9a8d480"
+                                      : moodData.darkColor === "bg-purple-300"
+                                        ? "#d8b4fe80"
+                                        : moodData.darkColor === "bg-blue-300"
+                                          ? "#93c5fd80"
+                                          : moodData.darkColor ===
+                                              "bg-orange-300"
+                                            ? "#fdba7480"
+                                            : moodData.darkColor ===
+                                                "bg-red-300"
+                                              ? "#fca5a580"
+                                              : moodData.darkColor ===
+                                                  "bg-green-300"
+                                                ? "#86efac80"
+                                                : "#5eead480"
                                 })`,
                               }}></div>
                           )}
@@ -736,7 +769,7 @@ export default function JournalApp() {
                                   month: "long",
                                   day: "numeric",
                                   year: "numeric",
-                                }
+                                },
                               )}
                             </div>
                             <h3 className="text-xl font-semibold text-gray-900 mb-3 group-hover:text-amber-700 transition-colors">
@@ -746,20 +779,25 @@ export default function JournalApp() {
                               {entry.thoughts}
                             </p>
                             {entry.photos && entry.photos.length > 0 && (
-                              <div className="flex gap-2 mb-4">
-                                {entry.photos.slice(0, 3).map((photo, idx) => (
-                                  <img
-                                    key={idx}
-                                    src={photo}
-                                    alt=""
-                                    className="relative flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden border-2 border-white shadow-md"
-                                  />
-                                ))}
-                                {entry.photos.length > 3 && (
-                                  <div className="w-20 h-20 bg-gray-100 rounded-md flex items-center justify-center text-gray-500 text-sm">
-                                    +{entry.photos.length - 3}
-                                  </div>
-                                )}
+                              <div className="mb-4 mx-[-1.5rem] px-6">
+                                <div
+                                  className="flex gap-2 overflow-x-auto scroll-smooth
+        [scrollbar-width:none] [&::-webkit-scrollbar]:hidden
+        snap-x snap-mandatory touch-pan-x"
+                                  onClick={(e) => e.stopPropagation()}>
+                                  {entry.photos.map((photo, idx) => (
+                                    <img
+                                      key={idx}
+                                      src={photo}
+                                      alt=""
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setPreviewPhoto(photo);
+                                      }}
+                                      className="flex-shrink-0 w-24 h-24 rounded-lg border-2 border-white shadow-md object-cover cursor-zoom-in snap-start"
+                                    />
+                                  ))}
+                                </div>
                               </div>
                             )}
                             <div className="flex flex-wrap gap-2">
@@ -789,7 +827,45 @@ export default function JournalApp() {
           </div>
         )}
       </div>
-
+      {previewPhoto && (
+        <div
+          onClick={() => setPreviewPhoto(null)}
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 cursor-zoom-out">
+          <img
+            src={previewPhoto}
+            alt=""
+            className="max-w-full max-h-full rounded-xl shadow-2xl object-contain"
+          />
+          <button
+            onClick={() => setPreviewPhoto(null)}
+            className="absolute top-4 right-4 p-2 bg-white/20 hover:bg-white/30 rounded-full transition-colors">
+            <X className="w-5 h-5 text-white" />
+          </button>
+        </div>
+      )}
+      {showWelcome && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
+            <div className="w-14 h-14 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg mx-auto mb-5">
+              <BookOpen className="w-7 h-7 text-white" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+              Welcome to My Journal
+            </h2>
+            <p className="text-gray-500 leading-relaxed mb-8">
+              Your personal journalling app. If this is your first time, please
+              feel free to save personal information at your discretion — your
+              data is stored only in the browser on this device and never sent
+              anywhere.
+            </p>
+            <button
+              onClick={dismissWelcome}
+              className="w-full px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg font-medium hover:shadow-lg transition-all">
+              Start Writing
+            </button>
+          </div>
+        </div>
+      )}
       <footer className="bg-white/50 backdrop-blur-sm border-t border-amber-100/50 mt-20">
         <div className="max-w-5xl mx-auto px-4 py-6 text-center">
           <p className="text-gray-400 text-sm">
