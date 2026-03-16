@@ -638,7 +638,7 @@ export default function JournalApp() {
                 <h1 className="text-xl font-semibold text-gray-900">
                   My Journal
                 </h1>
-                <p className="text-xs text-gray-500">Your private sanctuary</p>
+                <p className="text-xs text-gray-500">Write your story</p>
               </div>
             </a>
             <button
@@ -911,7 +911,7 @@ export default function JournalApp() {
               <h1 className="text-xl font-semibold text-gray-900">
                 My Journal
               </h1>
-              <p className="text-xs text-gray-500">Your private sanctuary</p>
+              <p className="text-xs text-gray-500">Write your story</p>
             </div>
           </a>
           <button
@@ -1108,13 +1108,10 @@ export default function JournalApp() {
               <BookOpen className="w-7 h-7 text-white" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-3">
-              Welcome to My Journal
+              Welcome to Your Journal
             </h2>
             <p className="text-gray-500 leading-relaxed mb-8">
-              Your personal journalling app. If this is your first time, please
-              feel free to save personal information at your discretion — your
-              data is stored only in the browser on this device and never sent
-              anywhere.
+              If this is your first time, please feel free to save personal information at your discretion — your data is stored only in the browser on this device and never sent anywhere.
             </p>
             <button
               onClick={dismissWelcome}
